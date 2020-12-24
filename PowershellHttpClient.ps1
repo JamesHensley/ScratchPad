@@ -12,22 +12,12 @@ namespace IDST
 {
     public class QlixHelper
     {
-        public static async void TestIt(string downloadUrl)
-        {
-            Console.WriteLine("Inside testIt...");
-            Task<string> task = DownloadPageAsync(downloadUrl);
-            string something = await task;
-
-            Console.WriteLine(something ?? "No Valid Data");
-        }
-
         public static async Task<string> DownloadPageAsync(string downloadUrl)
         {
             string result = "";
             await Task.Run(async () => {
-                string page = downloadUrl;
                 using (HttpClient client = new HttpClient())
-                using (HttpResponseMessage response = await client.GetAsync(page))
+                using (HttpResponseMessage response = await client.GetAsync(downloadUrl))
                 using (HttpContent content = response.Content)
                 {
                     result = await content.ReadAsStringAsync();
