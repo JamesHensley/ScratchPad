@@ -1,54 +1,50 @@
 $Assem = ("System", "System.Net.Http", "System.Threading.Tasks")
 
 $Source = @"
-    using System;
-    using System.Net.Http;
-    using System.Threading.Tasks;
-    namespace IDST {
-        public class Program
-        {
-            public static void Main()
-            {
-                Console.WriteLine("Inside Main...");
-                testIt();
-            }
-            
-            public static async void testIt() {
-                Console.WriteLine("Inside testIt...");
-                Console.WriteLine("Downloading page...");
-                Task<string> task = DownloadPageAsync();
-                string something = await task;
+using System;
+using System.Threading.Tasks;
+using System.Net.Http;
+// using System.Collections.Generic;
+// using System.Linq;
+// using System.Text;
 
-                Console.WriteLine(something);
-                Console.WriteLine("All Finished...");
-                Console.ReadKey();
-            }
-            static async Task<string> DownloadPageAsync()
-            {
-                Console.WriteLine("Inside DownloadPageAsync...");
-                string result = "";
-                await Task.Run(async () => {
-                    Console.WriteLine("Inside Download");
-                    string page = "http://en.wikipedia.org/";
-                    using (HttpClient client = new HttpClient())
-                    using (HttpResponseMessage response = await client.GetAsync(page))
-                    using (HttpContent content = response.Content)
-                    {
-                        Console.WriteLine("Inside Usings....");
-                        result = await content.ReadAsStringAsync();
-                        if (result != null && result.Length >= 50)
-                        {
-                            Console.WriteLine(result.Substring(0, 50) + "...");
-                        }
-                    }
-                });
-                return result;
-            }
+namespace IDST
+{
+    public class QlixHelper
+    {
+        public static async void TestIt(string downloadUrl)
+        {
+            Console.WriteLine("Inside testIt...");
+            Task<string> task = DownloadPageAsync(downloadUrl);
+            string something = await task;
+
+            Console.WriteLine(something ?? "No Valid Data");
+        }
+
+        public static async Task<string> DownloadPageAsync(string downloadUrl)
+        {
+            string result = "";
+            await Task.Run(async () => {
+                string page = downloadUrl;
+                using (HttpClient client = new HttpClient())
+                using (HttpResponseMessage response = await client.GetAsync(page))
+                using (HttpContent content = response.Content)
+                {
+                    result = await content.ReadAsStringAsync();
+                }
+            });
+            return result;
         }
     }
+}
 "@
 
 Add-Type -ReferencedAssemblies $Assem -TypeDefinition $Source -Language CSharp
 
-[IDST.Program]::Main()
+$task = [IDST.QlixHelper]::DownloadPageAsync("http://en.wikipedia.org/")
+while (-not $task.AsyncWaitHandle.WaitOne(200)) { }
+$something = $task.GetAwaiter().GetResult()
+
+
+Write-Output $something
 Read-Host -Prompt "Press Enter to continue"
