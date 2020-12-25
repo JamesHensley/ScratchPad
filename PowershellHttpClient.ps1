@@ -1,4 +1,13 @@
-$Assem = ("System", "System.Net", "System.Net.Http", "System.Net.Http.WebRequest", "System.Threading.Tasks", "System.Security.Cryptography.X509Certificates")
+$Assem = (
+    "System",
+    "System.Net",
+    "System.Net.Http",
+    "System.Net.Http.WebRequest",
+    "System.Threading.Tasks",
+    "System.Security.Cryptography.X509Certificates",
+    "System.Xml",
+    "System.Xml.Linq"
+)
 
 $Source = @"
 using System;
@@ -8,11 +17,16 @@ using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
 using System.Net;
 using System.Net.Http;
+using System.Xml.Linq;
 
 namespace IDST
 {
     public class QlixHelper
     {
+        public static XDocument ParseDoc(string docStr) {
+            return XDocument.Parse(docStr, LoadOptions.PreserveWhitespace);
+        }
+
         public static X509Certificate2 GetCertWithThumb(string certThumbprint)
         {
             X509Certificate2 retCert = null;
@@ -65,12 +79,15 @@ namespace IDST
 
 Add-Type -ReferencedAssemblies $Assem -TypeDefinition $Source -Language CSharp
 
-$cert = [IDST.QlixHelper]::GetCertWithThumb("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+$cert = [IDST.QlixHelper]::GetCertWithThumb("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 Write-Output $cert
 
-#$task = [IDST.QlixHelper]::DownloadPageAsync("http://en.wikipedia.org/")
+$task = [IDST.QlixHelper]::DownloadPageAsync("http://en.wikipedia.org/")
 #$task = [IDST.QlixHelper]::DownloadPageAsync("https://webmail.XXXXX.XXX/my.policy#", $cert)
 
 while (-not $task.AsyncWaitHandle.WaitOne(200)) { }
 $taskReturn = $task.GetAwaiter().GetResult()
-Write-Output $taskReturn
+
+$xml = [IDST.QlixHelper]::ParseDoc($taskReturn)
+
+Write-Output $xml
